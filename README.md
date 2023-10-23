@@ -1,6 +1,7 @@
 # Bili2TYM 一键上传B站音频到Youtube Music
 一个小Tampermonkey脚本，用于将B站视频的音频轨一键上传到Youtube Music. 特点全程在浏览器端完成，不进行硬盘IO.
 ## 使用方法
+0. 确保两个网站的登录状态
 1. 安装`Bili2TYM.user.js`脚本
 2. 打开B站视频页面，点击右上角那个格格不入的`Upload to Youtube Music`按钮
 3. 等待上传完成
