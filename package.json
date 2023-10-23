@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "ffmpeg.js": "^4.2.9003",
+    "music-metadata": "^8.1.4"
+  }
+}
