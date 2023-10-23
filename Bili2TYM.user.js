@@ -13,6 +13,7 @@
 // @connect     bilivideo.com
 // @connect     youtube.com
 // @connect     hdslb.com
+// @connect     bilibili.com
 // ==/UserScript==
 
 
