@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bili2TYM (Bilibili audio one click to Youtube Music)
 // @namespace    
-// @version      0.0.1
+// @version      0.0.2
 // @description  Pull Audio Stream from Bilibili video and upload to Youtube Music
 // @author       Luke_lu
 // @match        *.bilibili.com/video/*
@@ -100,7 +100,7 @@ function addTags(stream,cover) {
         MEMFS: [{ name: "input.m4a", data: stream }, { name: "cover.jpg", data: cover }],
         //Sadly youtube music doesn't support cover image
         //arguments: ["-i", "input.m4a", "-i", "cover.jpg", "-map", "0", "-map", "1", "-c", "copy","-disposition:v:1", "attached_pic" , "-metadata", "artist="+VideoMeta['author']+ "","output.mp4"],
-        //arguments: ["-i", "input.m4a", "-map", "0", "-c", "copy", "-metadata", "artist="+VideoMeta['author']+ "","output.mp4"],
+        arguments: ["-i", "input.m4a", "-map", "0", "-c", "copy", "-metadata", "artist="+VideoMeta['author']+ "","output.mp4"],
         print: function(data) { stdout += data + "\n"; },
         printErr: function(data) { stderr += data + "\n"; },
         onExit: function(code) {
