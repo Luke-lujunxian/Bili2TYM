@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bili2TYM (Bilibili audio one click to Youtube Music)
-// @namespace    
-// @version      0.0.2
+// @namespace
+// @version      0.0.3
 // @description  Pull Audio Stream from Bilibili video and upload to Youtube Music
 // @author       Luke_lu
 // @match        *.bilibili.com/video/*
@@ -19,13 +19,43 @@
 
 (function() {
     'use strict';
-    
+    let display_b = document.createElement("button");//Display edit container
+    display_b.innerHTML = "Upload to Youtube Music";
+    display_b.style = "position:fixed;right:0px;z-index:9999;top:64px;color:black";
+
+    let container = document.createElement("div");
+    container.style = "position:fixed;right:0px;z-index:9999;top:86px;color:black;background-color:white;padding:10px;border:1px solid black";
+    container.style.display="none"
+    let title_i = document.createElement("input");
+    title_i.placeholder = "Title";
+    title_i.style = "width:100%"
+    let artist_i = document.createElement("input");
+    artist_i.style = "width:100%"
+    artist_i.placeholder = "Artist";
+    container.appendChild(title_i);
+    container.appendChild(artist_i);
+
+    display_b.onclick = function(){
+        if (container.style.display == "none") {
+            container.style.display = "block";
+            let urlEle = window.location.href.split("/");
+            let videoId = urlEle[urlEle.length - 2];
+            getCid(videoId).then((cid)=>{//Really bad code
+            title_i.value = VideoMeta["title"];
+            artist_i.value = VideoMeta["author"];
+            });
+        }else{
+            container.style.display = "none";
+        }
+    }
+
+
     let button = document.createElement("button");
-    button.innerHTML = "Upload to Youtube Music";
-    button.style = "position:fixed;right:0px;z-index:9999;top:64px;color:black";
-    let div = document.createElement("div");
+    container.appendChild(button);
+    document.body.appendChild(container);
+    button.innerHTML = "Submit"
     button.onclick = async function(){
-        if (button.innerHTML != "Upload to Youtube Music") {
+        if (button.innerHTML != "Submit") {
             button.innerHTML = "Working, Please Wait...";
             return;
         }
@@ -38,9 +68,13 @@
             return;
         }
 
+        //overwrite title and author, need refector
+        VideoMeta["title"] = title_i.value;
+        VideoMeta["author"] = artist_i.value;
+
         let cover = await getCover(VideoMeta["coverURL"]);
         //console.log(stream);
-        
+
         button.innerHTML = "Converting...";
         //Convert stream to Uint8Array
         let reader1 = new FileReader();
@@ -84,7 +118,9 @@
         button.innerHTML = "Error! Please press F12 to check the console";
 
     };
-    document.body.appendChild(button);
+    //Wait until the page is loaded
+    document.body.appendChild(display_b);
+
     //console.log(VideoMeta);
 })();
 
@@ -229,7 +265,7 @@ async function getAudioStreamUrl() {
     let videoId = urlEle[urlEle.length - 2];
     //console.log("videoId:" + videoId);
     let api = "https://api.bilibili.com/x/player/playurl?" + videoId[0].toLowerCase()+"vid=" + videoId + "&cid=" + await getCid(videoId) + "&fnval=16&fourk=1";
-    //console.log(api);  
+    //console.log(api);
     return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
             method: "GET",
