@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Bili2TYM (Bilibili audio one click to Youtube Music)
 // @namespace
-// @version      0.0.3
+// @version      0.0.4
 // @description  Pull Audio Stream from Bilibili video and upload to Youtube Music
 // @author       Luke_lu
 // @match        *.bilibili.com/video/*
+// @match        *.bilibili.com/list/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=google.com
 // @require      https://cdn.jsdelivr.net/gh/Luke-lujunxian/Bili2TYM/bundle.js
 // @grant        GM_addStyle
@@ -38,8 +39,7 @@
     display_b.onclick = function(){
         if (container.style.display == "none") {
             container.style.display = "block";
-            let urlEle = window.location.href.split("/");
-            let videoId = urlEle[urlEle.length - 2];
+            let videoId = getBVid()
             getCid(videoId).then((cid)=>{//Really bad code
             title_i.value = VideoMeta["title"];
             artist_i.value = VideoMeta["author"];
@@ -107,7 +107,8 @@
         let response = await uploadAudioStream(stream);
         if(response.status == 200){
             alert("Upload Success!");
-            button.innerHTML = "Upload to Youtube Music";
+            button.disabled = true;
+            button.innerHTML = "Upload to Youtube Music Done";
             return;
         }else if(response.status == 409){// 409 Conflict
             alert("Upload Failed! The song already exists in your library.");
@@ -261,8 +262,8 @@ function uploadAudioStream(stream) {
 
 
 async function getAudioStreamUrl() {
-    let urlEle = window.location.href.split("/");
-    let videoId = urlEle[urlEle.length - 2];
+
+    let videoId = getBVid()
     //console.log("videoId:" + videoId);
     let api = "https://api.bilibili.com/x/player/playurl?" + videoId[0].toLowerCase()+"vid=" + videoId + "&cid=" + await getCid(videoId) + "&fnval=16&fourk=1";
     //console.log(api);
@@ -304,6 +305,18 @@ function getCid(Vid){
             }
         });
     });
+}
+
+function getBVid(){
+    let urlEle = window.location.href.split("/");
+    let videoId
+    if(urlEle[3] == "list"){
+        let url2 = window.location.href.split("=")
+        videoId = url2[url2.length -1];
+    }else{
+        videoId = urlEle[urlEle.length - 2];
+    }
+    return videoId
 }
 
 
