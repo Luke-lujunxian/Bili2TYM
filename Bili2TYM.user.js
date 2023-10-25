@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bili2TYM (Bilibili audio one click to Youtube Music)
 // @namespace
-// @version      0.0.4
+// @version      0.0.4.1
 // @description  Pull Audio Stream from Bilibili video and upload to Youtube Music
 // @author       Luke_lu
 // @match        *.bilibili.com/video/*
@@ -107,7 +107,8 @@
         let response = await uploadAudioStream(stream);
         if(response.status == 200){
             alert("Upload Success!");
-            button.disabled = true;
+            if(window.location.href.split("/")[3]!="list")
+                button.disabled = true;
             button.innerHTML = "Upload to Youtube Music Done";
             return;
         }else if(response.status == 409){// 409 Conflict
