@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bili2TYM (Bilibili audio one click to Youtube Music)
 // @namespace
-// @version      0.0.4.1
+// @version      0.0.5
 // @description  Pull Audio Stream from Bilibili video and upload to Youtube Music
 // @author       Luke_lu
 // @match        *.bilibili.com/video/*
@@ -41,8 +41,8 @@
             container.style.display = "block";
             let videoId = getBVid()
             getCid(videoId).then((cid)=>{//Really bad code
-            title_i.value = VideoMeta["title"];
-            artist_i.value = VideoMeta["author"];
+                title_i.value = VideoMeta["title"];
+                artist_i.value = VideoMeta["author"];
             });
         }else{
             container.style.display = "none";
@@ -61,12 +61,23 @@
         }
 
         button.innerHTML = "Loading Audio Stream...";
-        let url = await getAudioStreamUrl();
-        let stream = await getAudioStream(url);
-        if (stream == false) {
-            alert("Upload Failed! Get Audio Stream Error");
-            return;
+
+        let stream = false
+        while ((stream == false)){
+            console.log("Getting new URL")
+            let url = await getAudioStreamUrl();
+            for(let i = 0 ; i < 10 ; i++){
+                stream = await getAudioStream(url);
+                if (stream == false) {
+                    console.log("Upload Failed! Get Audio Stream Error");
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    //return;
+                }else{
+                    break;
+                }
+            }
         }
+
 
         //overwrite title and author, need refector
         VideoMeta["title"] = title_i.value;
@@ -165,19 +176,22 @@ function getAudioStream(url) {
             headers: {
                 "Referer": "https://www.bilibili.com/",
                 "Origin": "https://www.bilibili.com",
-                "Accept": "*/*",
-                "User-Agent": window.navigator.userAgent
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "User-Agent": window.navigator.userAgent,
+                "Range": 'bytes=0-999999',
             },
             onload: function (response) {
-                if (response.status != 200) {
+                if (response.status != 200 && response.status != 206) {
+
                     console.log(response);
                     reject(false);
                 }
                 resolve(response.response);
             },
-            onerror: function (response) {
-                reject(response);
-            }
+            onerror: function (e) {
+                console.error ('**** error ', e);
+                resolve(false)
+            },
         });
     });
 }
@@ -189,10 +203,11 @@ function getCover(url) {
             url: url,
             responseType: "blob",
             headers: {
-                "Referer": "https://www.bilibili.com/",
-                "Origin": "https://www.bilibili.com",
-                "Accept": "*/*",
-                "User-Agent": window.navigator.userAgent
+                "Referer": window.location.herf,
+                //"Origin": "https://www.bilibili.com",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "User-Agent": window.navigator.userAgent,
+                "Range": 'bytes=0-999999',
             },
             onload: function (response) {
                 //console.log(response);
@@ -266,7 +281,7 @@ async function getAudioStreamUrl() {
 
     let videoId = getBVid()
     //console.log("videoId:" + videoId);
-    let api = "https://api.bilibili.com/x/player/playurl?" + videoId[0].toLowerCase()+"vid=" + videoId + "&cid=" + await getCid(videoId) + "&fnval=16&fourk=1";
+    let api = "https://api.bilibili.com/x/player/playurl?" + (videoId[0]=='B'?"bvid=" + videoId:"avid=" + videoId.substring(2)) + "&cid=" + await getCid(videoId) + "&fourk=1&fnver=0&fnval=4048";
     //console.log(api);
     return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
@@ -275,7 +290,8 @@ async function getAudioStreamUrl() {
             onload: function (response) {
                 let data = JSON.parse(response.responseText);
                 //console.log(typeof data.data.flac === Array?"T":"F");
-
+                //console.log(response)
+                //console.log(data)
                 //console.log("Audio Stream Url:" + data.data.dash.audio[0].baseUrl);
                 //console.log("FLAC Audio Stream Url:" + typeof data.data.flac === Array?data.data.flac[0].baseUrl:"None");
                 resolve(typeof data.data.flac === Array?data.data.flac[0].baseUrl:data.data.dash.audio[0].baseUrl); //flac优先 但我没有会员所以不知道有没有用
@@ -288,13 +304,15 @@ async function getAudioStreamUrl() {
 }
 
 function getCid(Vid){
-    let api = "https://api.bilibili.com/x/web-interface/view?" + Vid[0].toLowerCase() + "vid=" + Vid;
+    let api = "https://api.bilibili.com/x/web-interface/view?" + (Vid[0]=='B'?"bvid=" + Vid:"aid=" + Vid.substring(2));
     return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
             method: "GET",
             url: api,
             onload: function (response) {
+                //console.log(response)
                 let data = JSON.parse(response.responseText);
+                //console.log(data)
                 VideoMeta["title"] = data.data.title;
                 VideoMeta["coverURL"] = data.data.pic;
                 VideoMeta["author"] = data.data.owner.name;
