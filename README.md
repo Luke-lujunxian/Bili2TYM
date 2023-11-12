@@ -28,7 +28,8 @@ Feel free to open an issue or pull request or just fork it.🤗
 - [ ] 上传一图流视频到Youtube主站
 - [x] 上传前编辑视频标题
 - [ ] 支持其他音乐平台
-
+### 效果图
+![image](https://github.com/Luke-lujunxian/Bili2TYM/assets/32172402/0f9b6500-30b2-4ee3-84e4-29448f517670)
 
 
 ## Why?
