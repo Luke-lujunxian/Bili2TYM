@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bili2TYM (Bilibili audio one click to Youtube Music)
 // @namespace
-// @version      0.0.6
+// @version      0.0.6.1
 // @description  Pull Audio Stream from Bilibili video and upload to Youtube Music
 // @author       Luke_lu
 // @match        *.bilibili.com/video/*
@@ -84,7 +84,8 @@
         VideoMeta["author"] = artist_i.value;
 
         let cover = await getCover(VideoMeta["coverURL"]);
-        //console.log(stream);
+        let coverType = cover.name.substring(cover.name.length-3)
+        //console.log(cover);
 
         button.innerHTML = "Converting...";
         //Convert stream to Uint8Array
@@ -106,7 +107,7 @@
         });
 
         //Add cover and tags
-        stream = addTags(await audio,await image);
+        stream = addTags(await audio,await image, coverType);
         if (stream == false || stream.size == 0) {
             alert("Upload Failed! FFmpeg Error");
             button.innerHTML = "Error! Please press F12 to check the console";
@@ -146,16 +147,16 @@
 
 var VideoMeta = {};
 
-function addTags(stream,cover) {
+function addTags(stream,cover,coverType) {
 
-    //console.log(stream);
+    //console.log(cover);
     let stdout = "";
     let stderr = "";
     //Add a cover image and artist metadata to the audio file
     const result = ffmpeg({
-        MEMFS: [{ name: "input.m4a", data: stream }, { name: "cover.jpg", data: cover }],
+        MEMFS: [{ name: "input.m4a", data: stream }, { name: "cover."+coverType, data: cover }],
         //Sadly only mp3 can have pic, but bilibili video don't have hight bit rate anyway
-        arguments: ["-i", "input.m4a", "-i", "cover.jpg", "-map", "0", "-map", "1","-c:v", "copy", "-c:a", "libmp3lame","-disposition:v:1", "attached_pic","-id3v2_version","3" ,"-q:a", "0", "-metadata", "artist="+VideoMeta['author']+ "","output.mp3"],
+        arguments: ["-i", "input.m4a", "-i", "cover."+coverType, "-map", "0", "-map", "1","-c:v", "copy", "-c:a", "libmp3lame","-disposition:v:1", "attached_pic","-id3v2_version","3" ,"-q:a", "0", "-metadata", "artist="+VideoMeta['author']+ "","output.mp3"],
         //arguments: ["-i", "input.m4a", "-map", "0", "-c", "copy", "-metadata", "artist="+VideoMeta['author']+ "","output.mp4"],
         print: function(data) { stdout += data + "\n"; },
         printErr: function(data) { stderr += data + "\n"; },
@@ -215,11 +216,10 @@ function getCover(url) {
                 //"Origin": "https://www.bilibili.com",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "User-Agent": window.navigator.userAgent,
-                "Range": 'bytes=0-',
             },
             onload: function (response) {
                 //console.log(response);
-                resolve(new File([response.response], "test"+Date.now()+".jpg", {type: 'image/jpg'}));
+                resolve(new File([response.response], "test"+Date.now()+"."+url.substring(url.length-3)));
             },
             onerror: function (response) {
                 reject(response);
