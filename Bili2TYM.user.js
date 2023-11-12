@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bili2TYM (Bilibili audio one click to Youtube Music)
 // @namespace
-// @version      0.0.5
+// @version      0.0.6
 // @description  Pull Audio Stream from Bilibili video and upload to Youtube Music
 // @author       Luke_lu
 // @match        *.bilibili.com/video/*
@@ -107,11 +107,18 @@
 
         //Add cover and tags
         stream = addTags(await audio,await image);
-        if (stream == false) {
+        if (stream == false || stream.size == 0) {
             alert("Upload Failed! FFmpeg Error");
             button.innerHTML = "Error! Please press F12 to check the console";
             return;
         }
+
+
+        //DEBUG
+        //console.log(stream)
+
+        //saveBlob(stream,'test.mp3')
+        //return;
 
         button.innerHTML = "Uploading...";
         //Upload
@@ -147,9 +154,9 @@ function addTags(stream,cover) {
     //Add a cover image and artist metadata to the audio file
     const result = ffmpeg({
         MEMFS: [{ name: "input.m4a", data: stream }, { name: "cover.jpg", data: cover }],
-        //Sadly youtube music doesn't support cover image
-        //arguments: ["-i", "input.m4a", "-i", "cover.jpg", "-map", "0", "-map", "1", "-c", "copy","-disposition:v:1", "attached_pic" , "-metadata", "artist="+VideoMeta['author']+ "","output.mp4"],
-        arguments: ["-i", "input.m4a", "-map", "0", "-c", "copy", "-metadata", "artist="+VideoMeta['author']+ "","output.mp4"],
+        //Sadly only mp3 can have pic, but bilibili video don't have hight bit rate anyway
+        arguments: ["-i", "input.m4a", "-i", "cover.jpg", "-map", "0", "-map", "1","-c:v", "copy", "-c:a", "libmp3lame","-disposition:v:1", "attached_pic","-id3v2_version","3" ,"-q:a", "0", "-metadata", "artist="+VideoMeta['author']+ "","output.mp3"],
+        //arguments: ["-i", "input.m4a", "-map", "0", "-c", "copy", "-metadata", "artist="+VideoMeta['author']+ "","output.mp4"],
         print: function(data) { stdout += data + "\n"; },
         printErr: function(data) { stderr += data + "\n"; },
         onExit: function(code) {
@@ -164,7 +171,7 @@ function addTags(stream,cover) {
     if (out === undefined) {
         return false;
     }
-    return new Blob([out.data], { type: "audio/mp4" });
+    return new Blob([out.data], { type: "audio/mp3" });
 }
 
 function getAudioStream(url) {
@@ -178,7 +185,8 @@ function getAudioStream(url) {
                 "Origin": "https://www.bilibili.com",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "User-Agent": window.navigator.userAgent,
-                "Range": 'bytes=0-999999',
+                "Range": 'bytes=0-999999999999999',//I don't know, but this may work
+                "Cache-Control":"no-cache"
             },
             onload: function (response) {
                 if (response.status != 200 && response.status != 206) {
@@ -207,7 +215,7 @@ function getCover(url) {
                 //"Origin": "https://www.bilibili.com",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "User-Agent": window.navigator.userAgent,
-                "Range": 'bytes=0-999999',
+                "Range": 'bytes=0-',
             },
             onload: function (response) {
                 //console.log(response);
@@ -248,7 +256,7 @@ function uploadAudioStream(stream) {
                 GM_xmlhttpRequest({
                     method: "POST",
                     url: uploadUrl,
-                    data: new File([stream], "test"+Date.now()+".m4a", {type: 'audio/mp4'}),
+                    data: new File([stream], "test"+Date.now()+".m4a", {type: 'audio/mp3'}),
                     body: "filename="+fileName,
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
@@ -338,4 +346,15 @@ function getBVid(){
     return videoId
 }
 
+function saveBlob(blob, fileName) {
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+
+    var url = window.URL.createObjectURL(blob);
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
+};
 
