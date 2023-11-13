@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Bili2TYM (Bilibili audio one click to Youtube Music)
 // @namespace
-// @version      0.0.6.1
+// @version      0.0.6.2
 // @description  Pull Audio Stream from Bilibili video and upload to Youtube Music
 // @author       Luke_lu
 // @match        *.bilibili.com/video/*
 // @match        *.bilibili.com/list/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=google.com
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=music.youtube.com
 // @require      https://cdn.jsdelivr.net/gh/Luke-lujunxian/Bili2TYM/bundle.js
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
@@ -84,7 +84,7 @@
         VideoMeta["author"] = artist_i.value;
 
         let cover = await getCover(VideoMeta["coverURL"]);
-        let coverType = cover.name.substring(cover.name.length-3)
+        let coverType = cover.name.substring(cover.name.lastIndexOf('.'))
         //console.log(cover);
 
         button.innerHTML = "Converting...";
@@ -186,8 +186,8 @@ function getAudioStream(url) {
                 "Origin": "https://www.bilibili.com",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "User-Agent": window.navigator.userAgent,
-                "Range": 'bytes=0-999999999999999',//I don't know, but this may work
-                "Cache-Control":"no-cache"
+                //"Range": 'bytes=0-8130860',//I don't know, but this may work
+                "Sec-Fetch-Dest":"document",
             },
             onload: function (response) {
                 if (response.status != 200 && response.status != 206) {
@@ -212,14 +212,14 @@ function getCover(url) {
             url: url,
             responseType: "blob",
             headers: {
-                "Referer": window.location.herf,
+                "Referer": "https://www.bilibili.com/",
                 //"Origin": "https://www.bilibili.com",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "User-Agent": window.navigator.userAgent,
             },
             onload: function (response) {
                 //console.log(response);
-                resolve(new File([response.response], "test"+Date.now()+"."+url.substring(url.length-3)));
+                resolve(new File([response.response], "test"+Date.now()+"."+url.substring(url.lastIndexOf('.'))));
             },
             onerror: function (response) {
                 reject(response);
@@ -300,7 +300,7 @@ async function getAudioStreamUrl() {
                 //console.log(typeof data.data.flac === Array?"T":"F");
                 //console.log(response)
                 //console.log(data)
-                //console.log("Audio Stream Url:" + data.data.dash.audio[0].baseUrl);
+                console.log("Audio Stream Url:" + data.data.dash.audio[0].baseUrl);
                 //console.log("FLAC Audio Stream Url:" + typeof data.data.flac === Array?data.data.flac[0].baseUrl:"None");
                 resolve(typeof data.data.flac === Array?data.data.flac[0].baseUrl:data.data.dash.audio[0].baseUrl); //flac优先 但我没有会员所以不知道有没有用
             },
